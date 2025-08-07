@@ -7,7 +7,8 @@ Pequeño manual de primeros pasos para trabajar con Django.
 (-m indica que el comando que se ocupara con Python, trabaja de forma global)
 
 PD: Se recomienda ingresar la carpeta creada "entorno_virtual" dentro de `.gitignore`
-PD2: en `.gitignore` escribir tambien "*__pycache__" para que sin importar dentro de que carpeta se encuentre, ningun pycache se guarde en el repositorio 
+
+PD2: en `.gitignore` escribir tambien "*\_\_pycache__" para que sin importar dentro de que carpeta se encuentre, ningun pycache se guarde en el repositorio 
 
 ## activar entorno virtual
 [Para Unix] `source entorno_virtual/bin/actívate`
