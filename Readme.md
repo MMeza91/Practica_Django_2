@@ -7,8 +7,7 @@ Pequeño manual de primeros pasos para trabajar con Django.
 (-m indica que el comando que se ocupara con Python, trabaja de forma global)
 
 PD: Se recomienda ingresar la carpeta creada "entorno_virtual" dentro de `.gitignore`
-
-PD2: en `.gitignore` escribir tambien "*\_\_pycache__" para que sin importar dentro de que carpeta se encuentre, ningun pycache se guarde en el repositorio 
+PD2: en `.gitignore` escribir tambien "*__pycache__" para que sin importar dentro de que carpeta se encuentre, ningun pycache se guarde en el repositorio 
 
 ## activar entorno virtual
 [Para Unix] `source entorno_virtual/bin/actívate`
@@ -147,13 +146,51 @@ En el archivo `urls.py` del proyecto se realizan las siguientes modificaciones:
 
 Para poder ejecutar código python en la pagina web, se debe escribir cierto codigo estructurado por `Jinja` (https://jinja.palletsprojects.com/en/stable/)
 
+### Trabajando con funciones y variables de Python
+
+Para trabajar con funciones, la función se escribe {% funcion %} ejemplo:
+
     {%for columna in accion%}
         {{accion.nombre_columna_1}}
     {% endfor %}
+
+### Agregar templates de otros html con include 
     
-    {% load statics %}
+Para trabajar con templates en un solo archivo y no ir copiando el mismo codigo en cada uno de los templates, se puede escribir por ejemplo el nav en un `nav.html` y distribuirlo en los otros templates con el siguiente formato:
 
     {% include 'pagina_web.html' %}
+
+En nuestro caso sería `{% include 'nav.html' %}` y se deberia escribir al inicio, ya que es el nav
+
+También podemos hacer un `base.html` para agregar todos los links de los cdn, configuraciones y conexiones.
+
+### agregar templates de otros html con extends
+
+Otra forma de ingresar codigo desde otras plantillas web, es a través de especificar dentro de un archivo que información es general y que es especifica de la pagina, para eso unilizamos los bloques de `{% block content %}`
+
+Dentro del archivo padre colocaremos el contexto:
+
+    <h1>Información que se heredará en otros htmls</h1>
+
+    {% block content %}
+    contenido dinamico de la web y que por ende, no se heredará
+    {% endblock %}
+
+Dentro del archivo hijo
+
+    {% extends "dirección_template_padre.html %}
+
+    {% block content %}
+    contenido dinamico de la web del heredero
+    {% endblock %}
+
+Como resultado al renderizar el archivo hijo, el `<h1>` del padre se verá en el archivo hijo, pero lo que está dentro del `{% block content %}` será unico para cada html.
+
+### Trabajando con statics
+
+Se recomienda agregar sobre cada uno de los html, la siguiente frase:
+
+    {% load statics %}
 
 
 ## Crear modelos de la aplicación (Segunda parte)
@@ -241,3 +278,72 @@ En este archivo se debe importar las clases del CRUD desde `.views` y la path de
 
     path("direccion/", Nombre_ClaseListView.as_view(), name="lista_items"),
 
+
+## Creando Formularios
+
+
+
+### Creando Formularios con Funciones
+
+Para haer la función de registro de la pagina en el archivo `views.py` de la aplicación, escribimos el siguiente código:
+
+    from django.shortcuts import render, redirect
+    from django.contrib.auth.forms import UserCreationForm
+
+
+    def registro(request):
+        if request.method == "POST":
+            form = UserCreationForm(request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect("login")
+        else:
+            form = UserCreationForm()
+        contexto = {"form":form}
+        return render(request, "usuarios/registro.html", contexto)
+
+Creamos el html `registro.html`, en este caso está dentro de la carpeta `usuarios` que a su vez está ubicada dentro de la carpeta `templates`. Dentro de este archivo escribimos en el `body`:
+
+    <h2>Formulario tipo funcion</h2>
+    <form method="post">
+        {% csrf_token s%}
+        {{form.as_p}} 
+        <button type="submit">Registrarme!!!</button>
+    </form>
+
+En el archivo `urls.py` de la aplicación, escribimos el siguiente código:
+
+    from django.urls import path
+    from .views import registro
+    from django.contrib.auth import views as authview
+
+    urlpatterns = [
+        path("registro/",registro, name="registro"),
+        path("login/", authview.LoginView.as_view(template_name="usuarios/login.html") , name="login"),
+        path("logout/", authview.LogoutView.as_view() , name="logout")
+]
+
+En el archivo `settings.py` del proyecto, agregamos la siguiente configuración (puede ir entre `TEMPLATES` y `WSGI_APPLICATION`):
+
+    LOGIN_URL = "login"
+    LOGIN_REDIRECT_URL = "home"
+    LOGOUT_REDIRECT_URL = "login"
+
+Creamos el html `login.html` en este caso dentro de la carpeta usuarios con el siguiente codigo en el `body`:
+
+    <form method="post">
+        {% csrf_token %}
+        {{form.as_p}}
+        <button type="submit">Entrar</button>
+
+    </form>
+
+En caso de querer dejar una de las vistas solo accecibles estando logueado, para ello se debe ir a la aplicación donde está asociado ese template, al archivo `views.py` de esa aplicación, y adicionar:
+
+    from django.contrib.auth.decorators import login_required
+
+Y sobre la función o clase asociada a ese template escribir el decorador
+
+    @login_required
+
+    
